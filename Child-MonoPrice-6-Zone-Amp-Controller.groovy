@@ -10,7 +10,7 @@ https://www.amazon.com/USR-TCP232-302-Serial-Ethernet-Converter-Support/dp/B01GP
 Jorge Martinez
 */
 metadata {
-    definition (name: "Child MonoPrice 6 Zone Amp Controller", namespace: "jorge.martinez", author: "Jorge Martinez") {
+    definition (name: "MonoPrice 6 Zone Amp Controller - Child", namespace: "jorge.martinez", author: "Jorge Martinez") {
     capability "Switch"
 	capability "Initialize"
 	capability "Actuator"
@@ -50,12 +50,12 @@ metadata {
 def play (){
     if (logEnable) log.debug "play"
     state.status = "play"
-    sendEvent(name: "status", value: "play", isStateChange: true)
+    sendEvent(name: "status", value: "play")
 }
 def stop (){
     if (logEnable) log.debug "stop"
     state.status = "stop"
-    sendEvent(name: "status", value: "stop", isStateChange: true)
+    sendEvent(name: "status", value: "stop")
 }
 def UpdateData (NewData){
     if (logEnable) log.debug NewData
@@ -63,61 +63,61 @@ def UpdateData (NewData){
 	if (power.toInteger()){
 		state.switch = "on"
         state.status = "on"
-        sendEvent(name: "status", value: "on", isStateChange: true)
-		sendEvent(name: "switch", value: "on", isStateChange: true)
+        sendEvent(name: "status", value: "on")
+		sendEvent(name: "switch", value: "on")
 		}
 	if (!power.toInteger()){
 		state.switch = "off"
         state.status = "off"
-        sendEvent(name: "status", value: "off", isStateChange: true)
-    	sendEvent(name: "switch", value: "off", isStateChange: true)
+        sendEvent(name: "status", value: "off")
+    	sendEvent(name: "switch", value: "off")
 		}
 	
 	def mute = NewData.substring(9,11)
 	if (mute.toInteger()){
 		state.mute = "muted"
-		sendEvent(name: "mute", value: "muted", isStateChange: true)
+		sendEvent(name: "mute", value: "muted")
 		}
 	if (!mute.toInteger()){
 		state.mute = "unmuted"
-		sendEvent(name: "mute", value: "unmuted", isStateChange: true)
+		sendEvent(name: "mute", value: "unmuted")
 		}
 	def vol = NewData.substring(13,15)
 	if (state.internalLevel != vol){
 		state.internalLevel = vol.toInteger()
-		sendEvent(name: "internalLevel", value: state.internalLevel.toInteger(), isStateChange: true)
+		sendEvent(name: "internalLevel", value: state.internalLevel.toInteger())
         state.level = Math.round(state.internalLevel*100/settings.MaxVolumen)
-        sendEvent(name: "level", value: state.level, isStateChange: true)
+        sendEvent(name: "level", value: state.level)
         state.volume  = state.level
-        sendEvent(name: "volume", value: state.volume, isStateChange: true)
+        sendEvent(name: "volume", value: state.volume)
 		}
 	def source = NewData.substring(21,23)
 	if (state.mediaSource != source){
 		state.mediaSource = source.toInteger()
-		sendEvent(name: "mediaSource", value: state.mediaSource.toInteger(), isStateChange: true)
+		sendEvent(name: "mediaSource", value: state.mediaSource.toInteger())
         state.trackDescription = "Source: ${state.mediaSource}"
-        sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)
+        sendEvent(name: "trackDescription", value: state.trackDescription)
 		}
 	def Balance = NewData.substring(19,21)
 	if (state.balance != Balance){
 		state.balance = Balance.toInteger()
-		sendEvent(name: "balance", value: state.balance.toInteger(), isStateChange: true)
+		sendEvent(name: "balance", value: state.balance.toInteger())
 		}
 	def Bass = NewData.substring(17,19)
 	if (state.bass != Bass){
 		state.bass = Bass.toInteger()
-		sendEvent(name: "bass", value: state.bass.toInteger(), isStateChange: true)
+		sendEvent(name: "bass", value: state.bass.toInteger())
 		}
 	def Treble = NewData.substring(15,17)
 	if (state.treble != Treble){
 		state.treble = Treble.toInteger()
-		sendEvent(name: "treble", value: state.treble.toInteger(), isStateChange: true)
+		sendEvent(name: "treble", value: state.treble.toInteger())
 		}
 	}
 def setZone (){
 	len = device.deviceNetworkId.length()
 	state.zone = device.deviceNetworkId.substring(len-2,len).toInteger()
-	sendEvent(name: "zone", value: state.zone, isStateChange: true)
+	sendEvent(name: "zone", value: state.zone)
 }
 
 def nextTrack(){
@@ -129,10 +129,10 @@ def nextTrack(){
 			log.debug state.mediaSource
 			}
 			try {
-			sendEvent(name: "mediaSource", value: (newmediaSource), isStateChange: true)
+			sendEvent(name: "mediaSource", value: (newmediaSource))
 			state.mediaSource = newmediaSource
             state.trackDescription = "Source: ${state.mediaSource}"
-            sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)
+            sendEvent(name: "trackDescription", value: state.trackDescription)
 			parent.sendMsg ("<${state.zone}ch0${state.mediaSource}")
   			} 
 			catch (Exception e) {
@@ -149,10 +149,10 @@ def previousTrack(){
 			log.debug state.mediaSource
 			}
 			try {
-			sendEvent(name: "mediaSource", value: (newmediaSource), isStateChange: true)
+			sendEvent(name: "mediaSource", value: (newmediaSource))
 			state.mediaSource = newmediaSource
             state.trackDescription = "Source: ${state.mediaSource}"
-            sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)
+            sendEvent(name: "trackDescription", value: state.trackDescription)
 			parent.sendMsg ("<${state.zone}ch0${state.mediaSource}")
   			} 
 			catch (Exception e) {
@@ -185,9 +185,9 @@ def setLevel (Percent){
         state.volume = Percent
         state.level = Percent
         state.internalLevel = Value
-	    sendEvent(name: "volume", value: state.volume, isStateChange: true)
-        sendEvent(name: "level", value: state.level, isStateChange: true)
-        sendEvent(name: "internalLevel", value: state.internalLevel, isStateChange: true)
+	    sendEvent(name: "volume", value: state.volume)
+        sendEvent(name: "level", value: state.level)
+        sendEvent(name: "internalLevel", value: state.internalLevel)
 		strvolume = "00"
 		if (state.internalLevel.toInteger()<10) strvolume = "0${state.internalLevel}"
 		else strvolume = state.internalLevel.toString ()
@@ -200,8 +200,8 @@ def on() {
     if (logEnable) log.debug "trunning on"
 	try {
 		state.switch = "on"
-        sendEvent(name: "switch", value: "on", isStateChange: true)
-        sendEvent(name: "status", value: "on", isStateChange: true)
+        sendEvent(name: "switch", value: "on")
+        sendEvent(name: "status", value: "on")
         state.status = "on"
 		parent.sendMsg ("<${state.zone}pr01")
         }
@@ -213,10 +213,10 @@ def off() {
     if (logEnable) log.debug "trunning off"
     try {
 	 	state.switch = "off"
-        sendEvent(name: "switch", value: "off", isStateChange: true) 
-        sendEvent(name: "status", value: "off", isStateChange: true)
+        sendEvent(name: "switch", value: "off") 
+        sendEvent(name: "status", value: "off")
         state.status = "off"
-        sendEvent(name: "trackDescription", value: "off", isStateChange: true)
+        sendEvent(name: "trackDescription", value: "off")
         state.trackDescription = "off"
 		parent.sendMsg ("<${state.zone}pr00")
         }
@@ -231,12 +231,12 @@ def volumeUp() {
 	    		def newvolume = (state.volume.toInteger() + settings.Percent.toInteger()).toInteger()
 	    		log.debug newvolume
 	    		state.volume = newvolume
-				sendEvent(name: "volume", value: state.volume.toInteger(), isStateChange: true)
+				sendEvent(name: "volume", value: state.volume.toInteger())
                 state.level = state.volume
-                sendEvent(name: "level", value: state.level, isStateChange: true)
+                sendEvent(name: "level", value: state.level)
                 Value = Math.round(newvolume/100*settings.MaxVolumen)
                 state.internalLevel = Value
-                sendEvent(name: "level", value: state.internalLevel, isStateChange: true)
+                sendEvent(name: "level", value: state.internalLevel)
                 strvolume = "00"
 				if (state.internalLevel.toInteger()<10) strvolume = "0${state.internalLevel}"
 				else strvolume = state.internalLevel.toString ()
@@ -253,12 +253,12 @@ def volumeDown() {
 	    		def newvolume = (state.volume.toInteger() - settings.Percent.toInteger()).toInteger()
 	    		log.debug newvolume
 	    		state.volume = newvolume
-				sendEvent(name: "volume", value: state.volume.toInteger(), isStateChange: true)
+				sendEvent(name: "volume", value: state.volume.toInteger())
                 state.level = state.volume
-                sendEvent(name: "level", value: state.level, isStateChange: true)
+                sendEvent(name: "level", value: state.level)
                 Value = Math.round(newvolume/100*settings.MaxVolumen)
                 state.internalLevel = Value
-                sendEvent(name: "level", value: state.internalLevel, isStateChange: true)
+                sendEvent(name: "level", value: state.internalLevel)
                 strvolume = "00"
 				if (state.internalLevel.toInteger()<10) strvolume = "0${state.internalLevel}"
 				else strvolume = state.internalLevel.toString ()
@@ -275,7 +275,7 @@ def mute() {
     if (logEnable) log.debug "mute"
     try {
 	    	state.mute = "muted"
-		sendEvent(name: "mute", value: "muted", isStateChange: true)
+		sendEvent(name: "mute", value: "muted")
 	    	parent.sendMsg ("<${state.zone}mu01")
   } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
@@ -285,7 +285,7 @@ def unmute() {
     if (logEnable) log.debug "unmute"
     try {
 	    	state.mute = "unmuted"
-		sendEvent(name: "mute", value: "unmuted", isStateChange: true)
+		sendEvent(name: "mute", value: "unmuted")
 	    	parent.sendMsg ("<${state.zone}mu00")
   } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
@@ -295,9 +295,9 @@ def Source1(){
     if (logEnable) log.debug "Source1"
     try {
 		state.mediaSource = 1
-		sendEvent(name: "mediaSource", value: 1, isStateChange: true)
+		sendEvent(name: "mediaSource", value: 1)
         state.trackDescription = "Source: ${state.mediaSource}"
-        sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)
+        sendEvent(name: "trackDescription", value: state.trackDescription)
         parent.sendMsg ("<${state.zone}ch0${state.mediaSource}")
     } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
@@ -307,9 +307,9 @@ def Source2(){
     if (logEnable) log.debug "Source2"
     try {
 		state.mediaSource = 2
-		sendEvent(name: "mediaSource", value: 2, isStateChange: true)
+		sendEvent(name: "mediaSource", value: 2)
         state.trackDescription = "Source: ${state.mediaSource}"
-        sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)
+        sendEvent(name: "trackDescription", value: state.trackDescription)
 	    parent.sendMsg ("<${state.zone}ch0${state.mediaSource}")
   } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
@@ -319,9 +319,9 @@ def Source3(){
     if (logEnable) log.debug "Source3"
     try {	    
 		state.mediaSource = 3
-		sendEvent(name: "mediaSource", value: 3, isStateChange: true)
+		sendEvent(name: "mediaSource", value: 3)
         state.trackDescription = "Source: ${state.mediaSource}"
-        sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)        
+        sendEvent(name: "trackDescription", value: state.trackDescription)        
 		parent.sendMsg ("<${state.zone}ch0${state.mediaSource}") 
   } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
@@ -331,9 +331,9 @@ def Source4(){
     if (logEnable) log.debug "Source4"
     try {
 		state.mediaSource = 4
-		sendEvent(name: "mediaSource", value: 4, isStateChange: true)
+		sendEvent(name: "mediaSource", value: 4)
         state.trackDescription = "Source: ${state.mediaSource}"
-        sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)
+        sendEvent(name: "trackDescription", value: state.trackDescription)
 	    parent.sendMsg ("<${state.zone}ch0${state.mediaSource}")
   } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
@@ -343,9 +343,9 @@ def Source5(){
     if (logEnable) log.debug "Source5"
     try {	    
 		state.mediaSource = 5
-		sendEvent(name: "mediaSource", value: 5, isStateChange: true)
+		sendEvent(name: "mediaSource", value: 5)
         state.trackDescription = "Source: ${state.mediaSource}"
-        sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)        
+        sendEvent(name: "trackDescription", value: state.trackDescription)        
 	    parent.sendMsg ("<${state.zone}ch0${state.mediaSource}")
   } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
@@ -355,9 +355,9 @@ def Source6(){
     if (logEnable) log.debug "Source6"
     try {
 		state.mediaSource = 6
-		sendEvent(name: "mediaSource", value: 6, isStateChange: true)
+		sendEvent(name: "mediaSource", value: 6)
         state.trackDescription = "Source: ${state.mediaSource}"
-        sendEvent(name: "trackDescription", value: state.trackDescription, isStateChange: true)        
+        sendEvent(name: "trackDescription", value: state.trackDescription)        
 		parent.sendMsg ("<${state.zone}ch0${state.mediaSource}")
   } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
