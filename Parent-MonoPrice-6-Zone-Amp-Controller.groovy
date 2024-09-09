@@ -36,6 +36,7 @@ metadata {
 		command "CloseTelnet"
 		command "setChildzones"
 		command "Unschedule"
+		//command "healthCheck"
         
         attribute  "healthStatus", "enum", [ "unknown", "offline", "online" ]
 	}
@@ -167,7 +168,7 @@ def initialize(){
     }
     sendEvent(name: 'networkStatus', value: "online")
     unschedule()
-    runEvery15Minutes(healthCheck) // TODO
+    runEvery15Minutes(healthCheck)
 	switch (settings.PollSchedule) {
         case "1": runEvery1Minute(pollSchedule);log.info('pollSchedule 1 minute'); break;
         case "2": runEvery5Minutes(pollSchedule);log.info('pollSchedule 5 minute'); break;
@@ -206,14 +207,14 @@ def forcePoll(){
 def poll(){forcePoll()}
 
 def sendMsg(String msg){
-    state.lastTx = new Date()
+    state.lastTx = now()
 	if (logEnable) log.debug ("Sending telnet msg: " + msg)
     def hubAction = new hubitat.device.HubAction(msg, hubitat.device.Protocol.TELNET)
     if (logEnable) log.debug "result: ${hubAction}"
     return hubAction;
 }
 private parse(String msg) {
-    state.lastRx = new Date()
+    state.lastRx = now()
 	if (logEnable) log.debug("Parse recive: " + msg)
 	//if (!(msg.contains("Command Error")) && (msg.length()>5) && (msg.startsWith("#>"))){
     if (msg.substring(1,3)==("#>")) {
@@ -228,8 +229,7 @@ private parse(String msg) {
 }
 def telnetStatus(String status){
 	log.warn "telnetStatus: error: " + status
-	if (status != "receive error: Stream is closed")
-	{
+	if (status != "receive error: Stream is closed") {
 		log.error "Connection was dropped."
 		initialize()
 	}
@@ -248,12 +248,14 @@ def getChanelName (Number channel){
 
 void healthCheck() {
     // Should have received a response from poll + 1 minute and network should be connected
-    def lastRxThreshold = (settings.PollSchedule.ToInteger() + 2) * 60 // seconds
-    
-    boolean unknownState = (state.lastRx == 0 || state.lastRx == null)
+    def lastRxThreshold = ((settings.PollSchedule.toInteger() ?: 30) + 2) * 60 * 1000 // milliseconds
     boolean networkConnected = (state.networkStatus == "online")
-    boolean lastRxHealth = (now() - state.lastRx) < lastRxThreshold
     
-    String healthStatus = unknownState ? 'unknown' : ((networkConnected && lastRxHealth) ? 'online' : 'offline')
-    sendEvent(name: 'healthStatus', value: healthStatus)
+    if (state.lastRx == 0 || state.lastRx == null) {
+        sendEvent(name: 'healthStatus', value: 'unknown')
+    } else {
+        boolean lastRxHealth = (now() - state.lastRx.toLong()) < lastRxThreshold
+        String healthStatus = unknownState ? 'unknown' : ((networkConnected && lastRxHealth) ? 'online' : 'offline')
+        sendEvent(name: 'healthStatus', value: healthStatus)
+    }
 }
