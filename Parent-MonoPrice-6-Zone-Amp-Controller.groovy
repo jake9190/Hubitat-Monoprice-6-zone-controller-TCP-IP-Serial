@@ -36,7 +36,7 @@ metadata {
 		command "CloseTelnet"
 		command "setChildzones"
 		command "Unschedule"
-		//command "healthCheck"
+		command "healthCheck"
         
         attribute  "healthStatus", "enum", [ "unknown", "offline", "online" ]
 	}
@@ -71,7 +71,7 @@ metadata {
             input "Channel6Name", "String", title:"Name of channel 6", description: "", required: true, defaultValue: "Channel6"
 			input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 			input name: "NumberAmps", type: "enum", description: "", title: "Number Amps", options: [[1:"1"],[2:"2"],[3:"3"]], defaultValue: 1
-			input name: "PollSchedule", type: "enum", description: "", title: "Poll frequency in min", options: [[1:"1"],[2:"5"],[3:"15"],[4:"30"]], defaultValue: 1
+			input name: "PollMinutes", type: "Number", description: "", title: "Poll frequency in min", defaultValue: 1, range: "0..59"
 			// 1, 5, 15 and 30 minites
 		}
 	}
@@ -169,14 +169,14 @@ def initialize(){
     sendEvent(name: 'networkStatus', value: "online")
     unschedule()
     runEvery15Minutes(healthCheck)
-	switch (settings.PollSchedule) {
-        case "1": runEvery1Minute(pollSchedule);log.info('pollSchedule 1 minute'); break;
-        case "2": runEvery5Minutes(pollSchedule);log.info('pollSchedule 5 minute'); break;
-        case "3": runEvery15Minutes(pollSchedule);log.info('pollSchedule 15 minute'); break;
-		case "4": runEvery30Minutes(pollSchedule);log.info('pollSchedule 30 minute'); break;
-        default: log.info('pollSchedule ERROR');
-	}
+	schedulePoll()
 	forcePoll()
+}
+
+void schedulePoll() {
+    unschedule()
+    Random rnd = new Random()
+    if (settings.PollMinutes > 0) schedule( "${rnd.nextInt(59)} */${ settings.PollMinutes } * ? * *", "refresh" )
 }
 
 def pollAmp1 (){
@@ -215,6 +215,7 @@ def sendMsg(String msg){
 }
 private parse(String msg) {
     state.lastRx = now()
+    if ((device.currentState("networkStatus").value == "offline")) healthCheck()
 	if (logEnable) log.debug("Parse recive: " + msg)
 	//if (!(msg.contains("Command Error")) && (msg.length()>5) && (msg.startsWith("#>"))){
     if (msg.substring(1,3)==("#>")) {
@@ -248,13 +249,14 @@ def getChanelName (Number channel){
 
 void healthCheck() {
     // Should have received a response from poll + 1 minute and network should be connected
-    def lastRxThreshold = ((settings.PollSchedule.toInteger() ?: 30) + 2) * 60 * 1000 // milliseconds
-    boolean networkConnected = (state.networkStatus == "online")
+    def lastRxThreshold = ((settings.PollMinutes ?: 30) + Math.min(settings.PollMinutes, 5)) * 60 * 1000 // millseconds
+    boolean networkConnected = (device.currentState("networkStatus").value == "online")
     
     if (state.lastRx == 0 || state.lastRx == null) {
         sendEvent(name: 'healthStatus', value: 'unknown')
     } else {
         boolean lastRxHealth = (now() - state.lastRx.toLong()) < lastRxThreshold
+        if ((!networkConnected || !lastRxHealth)) log.debug "network = ${networkConnected} (${device.currentState("networkStatus").value}), rxHealth = ${lastRxHealth}: (${now() - state.lastRx.toLong()} < ${lastRxThreshold} @ ${settings.PollSchedule.toInteger()})"
         String healthStatus = unknownState ? 'unknown' : ((networkConnected && lastRxHealth) ? 'online' : 'offline')
         sendEvent(name: 'healthStatus', value: healthStatus)
     }
