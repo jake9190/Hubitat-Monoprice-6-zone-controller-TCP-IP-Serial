@@ -176,7 +176,7 @@ def initialize(){
 void schedulePoll() {
     unschedule()
     Random rnd = new Random()
-    if (settings.PollMinutes > 0) schedule( "${rnd.nextInt(59)} */${ settings.PollMinutes } * ? * *", "refresh" )
+    if (settings.PollMinutes > 0) schedule( "${rnd.nextInt(59)} */${ settings.PollMinutes } * ? * *", "pollSchedule" )
 }
 
 def pollAmp1 (){
