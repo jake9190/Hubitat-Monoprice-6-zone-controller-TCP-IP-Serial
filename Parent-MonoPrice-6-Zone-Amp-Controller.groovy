@@ -168,7 +168,7 @@ def initialize(){
     }
     sendEvent(name: 'networkStatus', value: "online")
     unschedule()
-    runEvery15Minutes(healthCheck)
+    runEvery5Minutes(healthCheck)
 	schedulePoll()
 	forcePoll()
 }
@@ -177,6 +177,7 @@ void schedulePoll() {
     unschedule()
     Random rnd = new Random()
     if (settings.PollMinutes > 0) schedule( "${rnd.nextInt(59)} */${ settings.PollMinutes } * ? * *", "pollSchedule" )
+    runEvery5Minutes(healthCheck)
 }
 
 def pollAmp1 (){
